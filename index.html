@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>肖志伟｜建筑 / 3D / BIM 背景下的 AI 工具与 Agent 工作流实践</title>
+  <style>
+    :root {
+      --bg: #eeeae2;
+      --paper: #f8f5ee;
+      --card: #fffdf8;
+      --ink: #20221f;
+      --muted: #686b65;
+      --line: #d6d0c3;
+      --deep: #3f433c;
+      --soft: #e6dfd1;
+      --accent: #7d6548;
+      --green: #586657;
+      --shadow: 0 24px 70px rgba(50, 45, 35, .10);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes softFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes lineDrift {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 86px 86px, 86px 86px; }
+    }
+
+    @keyframes timelineGrow {
+      from { opacity: 0; transform: scaleY(0); }
+      to { opacity: 1; transform: scaleY(1); }
+    }
+
+    @keyframes timelineStepIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes timelineDotIn {
+      from { opacity: 0; transform: scale(.58); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes timelineCardIn {
+      from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-12px); }
+      to { opacity: 1; clip-path: inset(0 0 0 0); transform: translateX(0); }
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(63,67,60,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(63,67,60,.035) 1px, transparent 1px),
+        var(--bg);
+      background-size: 32px 32px;
+      line-height: 1.72;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      border-bottom: 1px solid rgba(213,208,196,.8);
+      backdrop-filter: blur(18px);
+      background: rgba(238,234,226,.82);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: .01em;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--deep);
+      display: grid;
+      place-items: center;
+      transform: rotate(45deg);
+      background: rgba(255,253,248,.62);
+    }
+
+    .mark span {
+      transform: rotate(-45deg);
+      font-size: 13px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover { color: var(--ink); }
+
+    .wrap {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      min-height: 86vh;
+      display: grid;
+      grid-template-columns: 1.03fr .97fr;
+      gap: 50px;
+      align-items: center;
+      padding: 70px 0 58px;
+    }
+
+    .hero > div:first-child {
+      animation: fadeUp .75s ease both;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,253,248,.72);
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    h1 {
+      margin: 22px 0 18px;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: .98;
+      letter-spacing: 0;
+      font-weight: 950;
+    }
+
+    .role {
+      margin: 0 0 20px;
+      font-size: clamp(20px, 2.8vw, 31px);
+      line-height: 1.28;
+      font-weight: 850;
+      color: var(--deep);
+    }
+
+    .lead {
+      max-width: 760px;
+      font-size: 20px;
+      color: var(--muted);
+      margin: 0 0 28px;
+    }
+
+    .lead strong { color: var(--ink); }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid var(--deep);
+      background: var(--deep);
+      color: var(--paper);
+      font-weight: 850;
+    }
+
+    .btn.secondary {
+      background: transparent;
+      color: var(--deep);
+    }
+
+    .contact-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 18px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .contact-list span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .visual-panel {
+      position: relative;
+      min-height: 560px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(255,253,248,.96), rgba(229,223,210,.88)),
+        radial-gradient(circle at 78% 18%, rgba(125,101,72,.12), transparent 34%);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: fadeUp .85s ease .12s both;
+    }
+
+    .visual-panel::before,
+    .visual-panel::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(63,67,60,.18);
+      pointer-events: none;
+    }
+
+    .visual-panel::before { inset: 34px; }
+    .visual-panel::after {
+      width: 310px;
+      height: 310px;
+      border-radius: 50% 50% 0 0;
+      left: 50%;
+      bottom: 88px;
+      transform: translateX(-50%);
+      border-bottom: none;
+    }
+
+    .blueprint-lines {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 49.8%, rgba(63,67,60,.15) 50%, transparent 50.2%),
+        linear-gradient(transparent 49.8%, rgba(63,67,60,.15) 50%, transparent 50.2%);
+      background-size: 86px 86px;
+      mask-image: radial-gradient(circle at center, black 0, transparent 72%);
+      opacity: .56;
+      animation: lineDrift 18s linear infinite;
+    }
+
+    .floating-card {
+      position: absolute;
+      width: 252px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,253,248,.86);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 40px rgba(50,45,35,.09);
+      animation: softFloat 5.5s ease-in-out infinite;
+    }
+
+    .floating-card b { display: block; margin-bottom: 4px; }
+    .floating-card span { color: var(--muted); font-size: 14px; }
+    .fc-1 { top: 58px; left: 52px; }
+    .fc-2 { right: 48px; top: 200px; animation-delay: .8s; }
+    .fc-3 { left: 92px; bottom: 68px; animation-delay: 1.4s; }
+
+    section {
+      padding: 82px 0;
+      border-top: 1px solid rgba(213,208,196,.72);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 42px;
+      align-items: start;
+      margin-bottom: 34px;
+    }
+
+    .index {
+      font-family: Georgia, serif;
+      font-size: 68px;
+      line-height: 1;
+      color: rgba(63,67,60,.23);
+    }
+
+    h2 {
+      font-size: clamp(31px, 4vw, 52px);
+      line-height: 1.1;
+      letter-spacing: 0;
+      margin: 0 0 16px;
+    }
+
+    .section-desc {
+      margin: 0;
+      font-size: 19px;
+      color: var(--muted);
+      max-width: 850px;
+    }
+
+    .grid { display: grid; gap: 22px; }
+    .grid.two { grid-template-columns: repeat(2, 1fr); }
+    .grid.three { grid-template-columns: repeat(3, 1fr); }
+    .grid.four { grid-template-columns: repeat(4, 1fr); }
+
+    .card {
+      background: rgba(255,253,248,.86);
+      border: 1px solid var(--line);
+      padding: 26px;
+      box-shadow: 0 12px 40px rgba(50,45,35,.055);
+      position: relative;
+      overflow: hidden;
+      transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(125,101,72,.45);
+      box-shadow: 0 20px 54px rgba(50,45,35,.095);
+    }
+
+    .card.reveal.is-visible,
+    .timeline-item.reveal.is-visible {
+      animation: fadeUp .72s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .grid .card.reveal.is-visible:nth-child(2),
+    .timeline .timeline-item.is-visible:nth-child(2) { animation-delay: .08s; }
+
+    .grid .card.reveal.is-visible:nth-child(3),
+    .timeline .timeline-item.is-visible:nth-child(3) { animation-delay: .16s; }
+
+    .grid .card.reveal.is-visible:nth-child(4),
+    .timeline .timeline-item.is-visible:nth-child(4) { animation-delay: .24s; }
+
+    .grid .card.reveal.is-visible:nth-child(5) { animation-delay: .32s; }
+    .grid .card.reveal.is-visible:nth-child(6) { animation-delay: .40s; }
+
+    .card h3 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .card p, .card li {
+      color: var(--muted);
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .card ul { margin: 0; padding-left: 18px; }
+    .card li { margin-bottom: 8px; }
+
+    .caption {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .quote {
+      padding: 28px 32px;
+      border-left: 8px solid var(--deep);
+      background: rgba(255,253,248,.78);
+      font-size: clamp(23px, 3vw, 35px);
+      line-height: 1.42;
+      letter-spacing: 0;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+    }
+
+    .project-hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .project-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 26px;
+    }
+
+    .cinema-stack {
+      display: grid;
+      gap: 70px;
+    }
+
+    .story-slide {
+      min-height: 72vh;
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 42px;
+      align-items: center;
+      padding: 34px 0;
+      border-top: 1px solid rgba(213,208,196,.55);
+      opacity: .32;
+      filter: blur(2px);
+      transform: translateY(34px);
+      transition: opacity .85s ease, filter .85s ease, transform .85s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .story-slide.is-visible {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0);
+    }
+
+    .story-slide:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .story-kicker {
+      display: inline-block;
+      margin-bottom: 14px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .story-title {
+      margin: 0 0 18px;
+      font-size: clamp(34px, 4.2vw, 58px);
+      line-height: 1.08;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .story-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 20px;
+      max-width: 680px;
+    }
+
+    .story-points {
+      display: grid;
+      gap: 14px;
+    }
+
+    .story-point {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      background: rgba(255,253,248,.78);
+      box-shadow: 0 10px 32px rgba(50,45,35,.05);
+    }
+
+    .story-point b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 19px;
+    }
+
+    .story-point span {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .story-media {
+      align-self: center;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .project-map {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .map-group {
+      min-height: auto;
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,253,248,.94), rgba(229,223,210,.62));
+      box-shadow: 0 12px 38px rgba(50,45,35,.06);
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .map-title {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 24px;
+    }
+
+    .map-title span {
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .map-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+
+    .map-item {
+      padding: 10px 12px;
+      border: 1px solid rgba(63,67,60,.16);
+      background: rgba(255,253,248,.7);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .map-arrow {
+      position: relative;
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      font-weight: 900;
+      letter-spacing: .08em;
+      writing-mode: horizontal-tb;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    .map-arrow::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      bottom: -8px;
+      width: 1px;
+      background: rgba(63,67,60,.35);
+      transform: translateX(-50%);
+    }
+
+    .map-arrow::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -9px;
+      width: 10px;
+      height: 10px;
+      border-top: 1px solid rgba(63,67,60,.55);
+      border-right: 1px solid rgba(63,67,60,.55);
+      transform: translateX(-50%) rotate(135deg);
+    }
+
+    .story-slide.timeline-slide {
+      grid-template-columns: minmax(300px, .72fr) minmax(0, 1.28fr);
+      align-items: start;
+    }
+
+    .story-slide.map-slide {
+      grid-template-columns: minmax(260px, .62fr) minmax(0, 1.38fr);
+    }
+
+    .workflow-timeline {
+      margin-top: 0;
+      position: relative;
+      padding: 4px 0 4px 34px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .workflow-timeline::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 16px;
+      bottom: 16px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(125,101,72,.25), rgba(63,67,60,.42), rgba(125,101,72,.25));
+      transform: scaleY(0);
+      transform-origin: top;
+      opacity: 0;
+    }
+
+    .timeline-step {
+      position: relative;
+      min-width: 0;
+      padding-top: 0;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    .timeline-dot {
+      position: absolute;
+      top: 16px;
+      left: -34px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--deep);
+      background: var(--paper);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--deep);
+      z-index: 1;
+      transform: scale(.68);
+      opacity: 0;
+    }
+
+    .timeline-card {
+      min-height: auto;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      background: rgba(255,253,248,.84);
+      box-shadow: 0 10px 32px rgba(50,45,35,.05);
+      clip-path: inset(0 100% 0 0);
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+
+    .timeline-card b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 17px;
+    }
+
+    .timeline-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .story-slide.is-visible .timeline-step {
+      animation: timelineStepIn .68s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .story-slide.is-visible .workflow-timeline::before {
+      animation: timelineGrow 1.95s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .story-slide.is-visible .timeline-dot {
+      animation: timelineDotIn .45s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .story-slide.is-visible .timeline-card {
+      animation: timelineCardIn .72s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .story-slide.is-visible .timeline-step:nth-child(1) { animation-delay: .18s; }
+    .story-slide.is-visible .timeline-step:nth-child(1) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(1) .timeline-card { animation-delay: .26s; }
+    .story-slide.is-visible .timeline-step:nth-child(2) { animation-delay: .34s; }
+    .story-slide.is-visible .timeline-step:nth-child(2) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(2) .timeline-card { animation-delay: .42s; }
+    .story-slide.is-visible .timeline-step:nth-child(3) { animation-delay: .50s; }
+    .story-slide.is-visible .timeline-step:nth-child(3) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(3) .timeline-card { animation-delay: .58s; }
+    .story-slide.is-visible .timeline-step:nth-child(4) { animation-delay: .66s; }
+    .story-slide.is-visible .timeline-step:nth-child(4) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(4) .timeline-card { animation-delay: .74s; }
+    .story-slide.is-visible .timeline-step:nth-child(5) { animation-delay: .82s; }
+    .story-slide.is-visible .timeline-step:nth-child(5) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(5) .timeline-card { animation-delay: .90s; }
+    .story-slide.is-visible .timeline-step:nth-child(6) { animation-delay: .98s; }
+    .story-slide.is-visible .timeline-step:nth-child(6) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(6) .timeline-card { animation-delay: 1.06s; }
+    .story-slide.is-visible .timeline-step:nth-child(7) { animation-delay: 1.14s; }
+    .story-slide.is-visible .timeline-step:nth-child(7) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(7) .timeline-card { animation-delay: 1.22s; }
+    .story-slide.is-visible .timeline-step:nth-child(8) { animation-delay: 1.30s; }
+    .story-slide.is-visible .timeline-step:nth-child(8) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(8) .timeline-card { animation-delay: 1.38s; }
+    .story-slide.is-visible .timeline-step:nth-child(9) { animation-delay: 1.46s; }
+    .story-slide.is-visible .timeline-step:nth-child(9) .timeline-dot,
+    .story-slide.is-visible .timeline-step:nth-child(9) .timeline-card { animation-delay: 1.54s; }
+
+    .timeline-step.loop .timeline-dot {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .timeline-step.archive .timeline-dot {
+      background: var(--deep);
+      color: var(--paper);
+    }
+
+    .workflow-note {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border: 1px dashed rgba(63,67,60,.32);
+      background: rgba(255,253,248,.62);
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .tag {
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(248,245,238,.82);
+      color: var(--deep);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .image-frame {
+      position: relative;
+      border: 1px solid var(--line);
+      background: rgba(255,253,248,.72);
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(50,45,35,.055);
+      cursor: zoom-in;
+      transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    }
+
+    .image-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(.9) contrast(1.02);
+      transition: transform .5s ease, filter .5s ease;
+    }
+
+    .image-frame:hover {
+      transform: translateY(-4px);
+      border-color: rgba(125,101,72,.45);
+      box-shadow: 0 22px 58px rgba(50,45,35,.12);
+    }
+
+    .image-frame:hover img {
+      transform: scale(1.035);
+      filter: saturate(1) contrast(1.05);
+    }
+
+    .image-frame.screen { aspect-ratio: 16 / 10; }
+    .image-frame.wide { aspect-ratio: 21 / 10; background: rgba(229,223,210,.55); }
+    .image-frame.wide img { object-fit: contain; padding: 10px; }
+
+    .image-caption {
+      padding: 10px 12px;
+      background: rgba(248,245,238,.94);
+      border-top: 1px solid rgba(213,208,196,.9);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .image-frame.has-caption img { height: calc(100% - 42px); }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .arch-node {
+      min-height: 146px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,253,248,.94), rgba(229,223,210,.68));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform .28s ease, box-shadow .28s ease;
+    }
+
+    .arch-node:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 44px rgba(50,45,35,.08);
+    }
+
+    .arch-node b { font-size: 19px; }
+    .arch-node span { color: var(--muted); font-size: 14px; }
+
+    .timeline {
+      display: grid;
+      gap: 18px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 22px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255,253,248,.78);
+      transition: transform .28s ease, box-shadow .28s ease;
+    }
+
+    .timeline-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 44px rgba(50,45,35,.08);
+    }
+
+    .time {
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .timeline-item h3 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .timeline-item p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .skill-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .skill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer {
+      padding: 52px 0;
+      background: var(--deep);
+      color: var(--paper);
+    }
+
+    .footer .wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .footer p { margin: 0; color: rgba(248,245,238,.72); }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 34px;
+      background: rgba(20, 21, 19, .82);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity .32s ease,
+        visibility 0s linear .32s,
+        backdrop-filter .32s ease;
+    }
+
+    .lightbox.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition:
+        opacity .28s ease,
+        visibility 0s linear 0s,
+        backdrop-filter .28s ease;
+    }
+
+    .lightbox-inner {
+      width: min(1180px, 100%);
+      max-height: calc(100vh - 68px);
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      border: 1px solid rgba(248,245,238,.22);
+      background: rgba(248,245,238,.96);
+      box-shadow: 0 30px 90px rgba(0,0,0,.38);
+      opacity: 0;
+      transform: translateY(16px) scale(.965);
+      transition: opacity .32s ease, transform .32s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .lightbox.is-open .lightbox-inner {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .lightbox img {
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 130px);
+      object-fit: contain;
+      background: #1c1d1a;
+    }
+
+    .lightbox-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .lightbox-close {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--deep);
+      border-radius: 50%;
+      background: var(--deep);
+      color: var(--paper);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .back-to-top {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 30;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid rgba(63,67,60,.45);
+      background: rgba(248,245,238,.86);
+      color: var(--deep);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+      box-shadow: 0 16px 44px rgba(50,45,35,.16);
+      backdrop-filter: blur(14px);
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity .28s ease, transform .28s cubic-bezier(.22, 1, .36, 1), visibility 0s linear .28s, background-color .28s ease;
+    }
+
+    .back-to-top.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+      transition: opacity .28s ease, transform .28s cubic-bezier(.22, 1, .36, 1), visibility 0s linear 0s, background-color .28s ease;
+    }
+
+    .back-to-top:hover {
+      background: var(--deep);
+      color: var(--paper);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .nav { align-items: flex-start; gap: 12px; flex-direction: column; }
+      .nav-links { flex-wrap: wrap; gap: 10px 14px; }
+      .hero, .section-head, .project-hero, .story-slide, .timeline-item { grid-template-columns: 1fr; }
+      .hero { min-height: auto; padding-top: 48px; }
+      .story-slide, .story-slide.map-slide, .story-slide.timeline-slide { min-height: auto; gap: 26px; padding: 50px 0; grid-template-columns: 1fr; }
+      .visual-panel { min-height: 480px; }
+      .grid.two, .grid.three, .grid.four, .skill-columns, .architecture, .project-map { grid-template-columns: 1fr; }
+      .map-group { grid-template-columns: 1fr; }
+      .map-list { grid-template-columns: 1fr; }
+      .map-arrow { min-height: 46px; }
+      .map-arrow::before { left: 50%; right: auto; top: 4px; bottom: 4px; width: 1px; height: auto; transform: translateX(-50%); }
+      .map-arrow::after { top: auto; right: auto; left: 50%; bottom: 2px; transform: translateX(-50%) rotate(135deg); }
+      .workflow-timeline { padding-left: 28px; }
+      .workflow-timeline::before { left: 13px; top: 20px; bottom: 0; }
+      .timeline-dot { top: 14px; left: -28px; }
+      .back-to-top { right: 18px; bottom: 18px; width: 44px; height: 44px; }
+      .contact-list { grid-template-columns: 1fr; }
+      .index { font-size: 46px; }
+    }
+
+    @media (max-width: 560px) {
+      .wrap { width: min(100% - 28px, 1180px); }
+      section { padding: 60px 0; }
+      .visual-panel { min-height: 430px; }
+      .floating-card { width: 215px; padding: 14px; }
+      .fc-1 { left: 22px; top: 42px; }
+      .fc-2 { right: 18px; top: 174px; }
+      .fc-3 { left: 34px; bottom: 48px; }
+      .card { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="#top"><div class="mark"><span>AI</span></div><span>肖志伟 Portfolio</span></a>
+    <div class="nav-links">
+      <a href="#profile">简介</a>
+      <a href="#path">路径</a>
+      <a href="#ai-native">AI 工作流</a>
+      <a href="#tool-analysis">工具分析</a>
+      <a href="#bridge">AI Bridge</a>
+      <a href="#architecture">架构</a>
+      <a href="#skills">技能</a>
+      <a href="#experience">经历</a>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="wrap hero">
+      <div>
+        <span class="eyebrow">AI Native Workflow × Agent Tooling × Design Background</span>
+        <h1>肖志伟</h1>
+        <p class="role">建筑设计背景，关注 AI 工具、Agent 工作流、AI 应用落地与流程自动化。</p>
+        <p class="lead">
+          具备 <strong>建筑 / 3D / BIM 场景理解、项目推进经验和工具链学习能力</strong>。长期高频使用 AI 进行学习、代码推进、文档整理、问题排查和方案推演，并在此基础上开发 AI Bridge，探索大模型如何接入工具、知识库、代码执行和真实工作流程。
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="#bridge">查看核心项目</a>
+          <a class="btn secondary" href="https://github.com/ZhiweiXiao98/AI-Bridge" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>
+        </div>
+        <div class="contact-list">
+          <span>📍 北京</span>
+          <span>📞 13507957421</span>
+          <span>✉️ 13507957421@139.com</span>
+          <span>GitHub: github.com/ZhiweiXiao98/AI-Bridge</span>
+        </div>
+      </div>
+
+      <div class="visual-panel" aria-label="AI Agent portfolio visual">
+        <div class="blueprint-lines"></div>
+        <div class="floating-card fc-1"><b>空间起点</b><span>从多模态理解建筑参考图，到 Rhino 脚本与建模工作流。</span></div>
+        <div class="floating-card fc-2"><b>智能体路径</b><span>用工具调用、上下文、反馈和校验约束模型执行。</span></div>
+        <div class="floating-card fc-3"><b>工具沉淀</b><span>个人高强度开发场景下的 AI Coding / Agent 平台实践。</span></div>
+      </div>
+    </header>
+
+    <section id="profile">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">01</div>
+          <div>
+            <h2>方向</h2>
+            <p class="section-desc">希望进入 AI 工具实践、AI 应用落地、Agent 工作流、流程自动化和平台协同相关方向。建筑与 3D/BIM 背景作为场景理解和结构化表达能力的补充，AI Bridge 是当前主要工程实践。</p>
+          </div>
+        </div>
+        <div class="grid three">
+          <div class="card">
+            <span class="caption">Background</span>
+            <h3>空间经验</h3>
+            <p>熟悉建筑方案、空间关系、构件逻辑、BIM 信息结构和视觉表达。这部分经历主要作为复杂场景理解、结构化表达和跨工具协作能力的基础。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Practice</span>
+            <h3>智能体实践</h3>
+            <p>持续研究 AI Coding 工具和 Agent 工作流，关注工具调用、外部反馈、上下文管理、知识检索和执行校验如何提升模型在真实任务中的可用性。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Direction</span>
+            <h3>去向</h3>
+            <p>AI 应用开发、AI 工具链、Agent 工作流、流程自动化、平台协同、AI Native 产品与内部效率工具相关岗位。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="path">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">02</div>
+          <div>
+            <h2>工具轨迹</h2>
+            <p class="section-desc">从建筑设计软件到 AI Coding 工具，学习路径一直围绕更高效的生产方式、更清晰的结构表达和更可靠的交付流程展开。</p>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="time">大学早期</div>
+            <div>
+              <h3>从手工到切割</h3>
+              <p>较早使用 CAD 绘制模型零部件，并通过激光切割完成建筑模型制作，开始关注工具对效率和精度的提升。</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="time">建筑学习阶段</div>
+            <div>
+              <h3>从形体到信息</h3>
+              <p>使用 Rhino 进行曲面建模，也尝试用 Revit / BIM 建模输出图纸，逐渐理解 3D 模型中的构件、空间、尺寸和信息关系。</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="time">工作阶段</div>
+            <div>
+              <h3>从图纸到表达</h3>
+              <p>在建筑表现、动画和汇报材料中使用 UE5、C4D、PR、AE 等工具，积累视觉表达、工具组合和成果交付经验。</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="time">当前阶段</div>
+            <div>
+              <h3>从软件到智能体</h3>
+              <p>从 AI 辅助 Rhino 建模的早期尝试，逐步转向更容易验证和迭代的 AI Coding、工具调用和 Agent 工作流实践。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai-native">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">03</div>
+          <div>
+            <h2>AI 工作方式</h2>
+            <p class="section-desc">日常使用 AI 时，重点不在“提问”，而在如何组织任务、管理记忆、调度模型、设计工具接口，并持续优化 Agent 的执行效率和用户体验。</p>
+          </div>
+        </div>
+
+        <div class="grid three">
+          <div class="card">
+            <span class="caption">Planning</span>
+            <h3>先成计划</h3>
+            <p>复杂任务会先交给 AI 做分析和拆解，按阶段、步骤、依赖关系输出计划书，再进入执行。这样可以先确定任务边界、风险点和验证方式，而不是直接开始生成代码。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Context Management</span>
+            <h3>记忆分层</h3>
+            <p>上下文分为长期记忆、中期记忆和短期记忆：长期记忆包含用户偏好、系统提示词、动态加载的 Skills 和工作日志；中期记忆保存压缩后的上下文摘要，并在需要时包含当前正在执行的任务书；短期记忆承载当前任务上下文。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Model Routing</span>
+            <h3>模型路由</h3>
+            <p>多模型协作更接近路由系统：由主 Agent 根据任务复杂度、模型能力和所需 Skills 分配给不同模型。不同模型调用工具的习惯差异很大，需要针对模型设计不同 Harness。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Evaluation</span>
+            <h3>交叉校验</h3>
+            <p>重要问题会交给多个不同 AI 分析，或把一个 AI 的输出交给其他 AI 审查。执行遇到困难时，会根据模型工作习惯调整提示词、工具设计、上下文组织和执行流程。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Optimization</span>
+            <h3>压缩损耗</h3>
+            <p>Agent 工作流不只看能不能完成任务，也要关注延迟、通信、思考、工具调用和反馈效率。需要持续优化每一次模型调用、工具返回和上下文压缩带来的时间成本。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Product Experience</span>
+            <h3>从可用到顺手</h3>
+            <p>AI Bridge 不只追求功能可用，也关注界面布局和使用体验。选择 PySide 架构，是希望像 Adobe 工具一样提供更美观、高度自定义的工作区，让 AI Coding 工具更适合长时间使用。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tool-analysis">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">04</div>
+          <div>
+            <h2>不止使用工具</h2>
+            <p class="section-desc">使用 Codex、Claude Code、Trae 等 AI Coding 工具时，不只关注它们能做什么，也会观察它们如何组织上下文、调用工具、处理错误、适配模型，以及哪些环节不完全适合自己的工作方式。</p>
+          </div>
+        </div>
+
+        <div class="story-slide">
+          <div>
+            <span class="story-kicker">Tool Analysis</span>
+            <h3 class="story-title">先理解工具，再重做工具。</h3>
+            <p class="story-copy">现成工具提供了很好的参照，但上下文、模型路由、界面布局、工具调用和工作日志沉淀这些环节，仍然需要更贴合个人工作流的设计。</p>
+          </div>
+          <div class="story-points">
+            <div class="story-point"><b>可控的链路</b><span>自研核心链路能更清楚地理解 Agent 运行机制，也方便在出错时定位和溯源。</span></div>
+            <div class="story-point"><b>拆到关键处</b><span>核心链路没有直接套用 LangChain，也没有直接基于 Monaco Editor 和 Electron 搭建，而是尽量拆解并实现关键模块。</span></div>
+            <div class="story-point"><b>适配不同模型</b><span>不同模型调用工具的习惯差异明显，需要围绕模型能力和工具行为做适配。</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="bridge">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">05</div>
+          <div>
+            <h2>AI Bridge</h2>
+            <p class="section-desc">AI Bridge 是这种工作方式的工具化沉淀：面向个人开发和复杂任务推进场景，支持大模型通过工具调用、知识检索、代码执行、文件操作、上下文管理和反馈机制参与软件开发流程。</p>
+          </div>
+        </div>
+
+        <div class="cinema-stack">
+          <div class="story-slide">
+            <div>
+              <span class="story-kicker">Why Build</span>
+              <h3 class="story-title">需求长出工具</h3>
+              <p class="story-copy">在长期使用 AI 进行开发和任务推进时，普通聊天界面和现成 AI Coding 工具并不能完全覆盖上下文、工具、日志、布局和路由需求，于是开始把自己的工作流沉淀成 AI Bridge。</p>
+            </div>
+            <div class="story-media image-frame screen has-caption">
+              <img src="images/ai-bridge-main.png" alt="AI Bridge 主界面截图" />
+              <div class="image-caption">AI Bridge 主界面 / Agent 对话与工具执行</div>
+            </div>
+          </div>
+
+          <div class="story-slide map-slide">
+            <div>
+              <span class="story-kicker">System Map</span>
+              <h3 class="story-title">三层系统</h3>
+              <p class="story-copy">它不是一个单纯聊天窗口，而是把客户端、模型输出来源、上下文、RAG、Skills、Docker 和插件扩展组织到同一个工作流里。</p>
+            </div>
+            <div class="project-map" aria-label="AI Bridge 架构地图">
+              <div class="map-group">
+                <div class="map-title">交互入口 <span>Clients</span></div>
+                <div class="map-list">
+                  <div class="map-item">PySide6 桌面客户端</div>
+                  <div class="map-item">Flet 移动端</div>
+                  <div class="map-item">远程客户端连接 Server</div>
+                </div>
+              </div>
+              <div class="map-arrow">WS</div>
+              <div class="map-group">
+                <div class="map-title">中台与消息源 <span>Server</span></div>
+                <div class="map-list">
+                  <div class="map-item">FastAPI + WebSocket</div>
+                  <div class="map-item">浏览器模式：Selenium 抓取 Web AI 页面输出</div>
+                  <div class="map-item">API 模式：调用模型兼容接口</div>
+                </div>
+              </div>
+              <div class="map-arrow">Run</div>
+              <div class="map-group">
+                <div class="map-title">能力层 <span>Tools</span></div>
+                <div class="map-list">
+                  <div class="map-item">Context Manager：多层记忆与压缩</div>
+                  <div class="map-item">RAG：ChromaDB + fastembed</div>
+                  <div class="map-item">Skills / Docker / 插件 / 后台建议助手</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="story-slide timeline-slide">
+            <div>
+              <span class="story-kicker">Agent Workflow</span>
+              <h3 class="story-title">任务流转</h3>
+              <p class="story-copy">计划、执行和验收不要求由同一个 Agent 完成；不同阶段可按任务复杂度路由到不同模型和 Skills。</p>
+            </div>
+            <div>
+              <div class="workflow-timeline" aria-label="Agent 工作流时间线">
+                <div class="timeline-step"><div class="timeline-dot">01</div><div class="timeline-card"><b>需求输入</b><span>用户提出开发、整理、检索、改造或排查需求。</span></div></div>
+                <div class="timeline-step"><div class="timeline-dot">02</div><div class="timeline-card"><b>资料收集</b><span>AI 读取背景、项目结构、历史上下文，并追问缺失细节。</span></div></div>
+                <div class="timeline-step"><div class="timeline-dot">03</div><div class="timeline-card"><b>计划书生成</b><span>按阶段、步骤、依赖、风险和验收方式输出任务计划。</span></div></div>
+                <div class="timeline-step loop"><div class="timeline-dot">04</div><div class="timeline-card"><b>计划对齐</b><span>用户提出修改建议，AI 继续调整计划，直到双方对齐。</span></div></div>
+                <div class="timeline-step"><div class="timeline-dot">05</div><div class="timeline-card"><b>进入执行</b><span>AI 按计划逐项推进，执行文件修改、检索、代码运行或工具调用。</span></div></div>
+                <div class="timeline-step"><div class="timeline-dot">06</div><div class="timeline-card"><b>成果校验</b><span>检查计划书中的事项是否完成，并结合测试、日志和工具反馈判断结果。</span></div></div>
+                <div class="timeline-step loop"><div class="timeline-dot">07</div><div class="timeline-card"><b>AI 验收</b><span>验收 Agent 审查执行结果；未通过则反馈问题，继续进入执行循环。</span></div></div>
+                <div class="timeline-step"><div class="timeline-dot">08</div><div class="timeline-card"><b>用户验收</b><span>AI 验收通过后交付用户，由用户确认结果或提出新的调整意见。</span></div></div>
+                <div class="timeline-step archive"><div class="timeline-dot">09</div><div class="timeline-card"><b>日志归档</b><span>归档工作日志、关键决策、问题记录和可复用经验，进入后续长期记忆。</span></div></div>
+              </div>
+              <div class="workflow-note">规划 Agent 可以负责分析和任务书，执行 Agent 负责落地，验收 Agent 负责审查结果；完成后的工作日志会归档到长期记忆，成为下一轮任务的上下文资产。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tags">
+          <span class="tag">Python</span>
+          <span class="tag">FastAPI</span>
+          <span class="tag">WebSocket</span>
+          <span class="tag">PySide6</span>
+          <span class="tag">Flet</span>
+          <span class="tag">OpenAI SDK</span>
+          <span class="tag">Google GenAI SDK</span>
+          <span class="tag">ChromaDB</span>
+          <span class="tag">fastembed</span>
+          <span class="tag">Docker</span>
+          <span class="tag">Selenium</span>
+          <span class="tag">ChromeDriver / CDP</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">06</div>
+          <div>
+            <h2>系统骨架</h2>
+            <p class="section-desc">项目围绕模型调用、工具执行、上下文管理、反馈机制、运行环境和多端交互展开，重点验证 Agent 工作流在个人开发场景中的可用性。</p>
+          </div>
+        </div>
+
+        <div class="architecture">
+          <div class="arch-node"><b>Server</b><span>FastAPI + WebSocket 中台，负责连接管理、消息分发、认证、状态同步和服务编排。</span></div>
+          <div class="arch-node"><b>Client / Mobile</b><span>PySide6 桌面端与 Flet 移动端，支持远程连接、会话管理、消息展示和工具结果呈现。</span></div>
+          <div class="arch-node"><b>LLM Sources</b><span>浏览器模式从 Web AI 页面抓取信息，API 模式从模型接口获取输出，并支持多模型 Profile 与 Fallback Chain。</span></div>
+          <div class="arch-node"><b>Tools / Plugins</b><span>Skills、Docker 沙箱、知识检索、网络搜索、面板插件、Rhino 集成和后台建议助手。</span></div>
+        </div>
+
+        <div class="grid three" style="margin-top:22px">
+          <div class="card">
+            <span class="caption">RAG</span>
+            <h3>知识索引</h3>
+            <p>基于 ChromaDB + fastembed 实现向量检索能力，支持增量索引、重排序、分块策略和知识库任务管理，让 Agent 能检索项目资料和历史上下文。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Tool Execution</span>
+            <h3>工具运行时</h3>
+            <p>基于可扩展 Skill 插件架构，内置文件操作、代码执行、知识搜索、网络搜索，并通过工具运行时处理调用、权限、结果和异常。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Context</span>
+            <h3>上下文回路</h3>
+            <p>设计系统、长期、工作、短期多层上下文窗口，支持自动压缩；后台建议助手可基于当前上下文提供纠错建议和下一步思路。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Sandbox</span>
+            <h3>隔离执行</h3>
+            <p>通过 Docker 提供隔离的代码执行环境，配合工具路由和执行历史，降低用户代码运行风险并增强调试可追踪性。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Browser Mode</span>
+            <h3>浏览器消息源</h3>
+            <p>通过 Selenium 驱动 Chrome 与 Web AI 页面交互，包含消息解析、输入发送、会话同步和浏览器状态机。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Extensibility</span>
+            <h3>外部扩展</h3>
+            <p>包含面板插件架构、Skills 管理面板、Rhino 监听器与插件入口，展示系统面向外部工具和专业软件工作流的扩展能力。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">07</div>
+          <div>
+            <h2>能力拼图</h2>
+            <p class="section-desc">能力结构围绕 AI 工具实践、Agent 工作流、应用工程、建筑 / 3D / BIM 场景理解和项目推进展开。</p>
+          </div>
+        </div>
+
+        <div class="skill-columns">
+          <div class="card">
+            <span class="caption">AI Application</span>
+            <h3>AI 工具与 Agent 工作流</h3>
+            <div class="skill-list">
+              <span class="tag">LLM API</span>
+              <span class="tag">API Mode</span>
+              <span class="tag">Browser Mode</span>
+              <span class="tag">Prompt Engineering</span>
+              <span class="tag">RAG</span>
+              <span class="tag">Agent Loop</span>
+              <span class="tag">Tool Calling</span>
+              <span class="tag">Context Management</span>
+              <span class="tag">Fallback Chain</span>
+            </div>
+          </div>
+          <div class="card">
+            <span class="caption">Full Stack</span>
+            <h3>应用工程与客户端</h3>
+            <div class="skill-list">
+              <span class="tag">Python</span>
+              <span class="tag">FastAPI</span>
+              <span class="tag">WebSocket</span>
+              <span class="tag">JWT</span>
+              <span class="tag">PySide6</span>
+              <span class="tag">Flet</span>
+              <span class="tag">HTML / CSS / JS</span>
+            </div>
+          </div>
+          <div class="card">
+            <span class="caption">Engineering</span>
+            <h3>工程化与流程自动化</h3>
+            <div class="skill-list">
+              <span class="tag">Docker</span>
+              <span class="tag">Selenium</span>
+              <span class="tag">ChromeDriver</span>
+              <span class="tag">Git</span>
+              <span class="tag">SQLite</span>
+              <span class="tag">ChromaDB</span>
+              <span class="tag">Plugin System</span>
+            </div>
+          </div>
+          <div class="card">
+            <span class="caption">Design Tools</span>
+            <h3>建筑 / 3D / BIM 工具</h3>
+            <p>Rhino、Grasshopper、Revit、D5、C4D、UE5、Blender、Photoshop、Illustrator、InDesign、Premiere、After Effects。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Strength</span>
+            <h3>模型边界与校验意识</h3>
+            <p>在多模态辅助 Rhino 建模尝试中观察到模型在计数、构件识别、比例还原等任务上的不稳定，因此更重视任务拆解、结构化表达、校验和反馈闭环。</p>
+          </div>
+          <div class="card">
+            <span class="caption">Strength</span>
+            <h3>跨领域落地能力</h3>
+            <p>建筑设计中的结构化分析、空间理解、视觉表达和交付经验，可用于 AI 工具设计、流程自动化、平台协同和 Agent 工程实践。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="experience">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="index">08</div>
+          <div>
+            <h2>经历底色</h2>
+            <p class="section-desc">经历部分补充说明项目协同、需求拆解、工具学习、成果把控、团队沟通和结构化表达能力。</p>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="time">2018.09 - 2023.06</div>
+            <div>
+              <h3>河北工程大学｜建筑学｜本科</h3>
+              <p>系统学习建筑设计、空间组织、结构逻辑、制图表达与项目汇报。荣誉：河北工程大学优秀毕业生。</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="time">2023.07 - 至今</div>
+            <div>
+              <h3>建筑设计院｜助理建筑师</h3>
+              <p>参与产业园、医院等项目的前期规划、总图设计、功能布局、流线组织、体量推敲与方案汇报，承担效果图、动画和汇报材料输出。工作中逐步承担项目推进、沟通协调和成果把控相关任务。</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="time">2025 - 至今</div>
+            <div>
+              <h3>AI Coding 与 Agent 工作流自研实践</h3>
+              <p>持续研究 Codex、Claude Code、Trae、OpenCode、CloudCLI 等 AI Coding / Agent 工具，围绕 AI Bridge 独立推进服务端、客户端、移动端、RAG、工具调用、浏览器自动化、Docker 沙箱和 Skills 系统等模块。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div>
+        <strong>肖志伟｜建筑 / 3D / BIM 背景下的 AI 工具与 Agent 工作流实践</strong>
+        <p>关注 AI 工具实践、Agent 工作流、AI 应用落地、流程自动化、平台协同、AI Native 产品与内部效率工具相关岗位。</p>
+      </div>
+      <a class="btn" href="https://github.com/ZhiweiXiao98/AI-Bridge" target="_blank" rel="noopener noreferrer">查看 GitHub</a>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="图片放大预览">
+    <div class="lightbox-inner">
+      <img id="lightboxImage" src="" alt="" />
+      <div class="lightbox-caption">
+        <span id="lightboxCaption"></span>
+        <button class="lightbox-close" type="button" aria-label="关闭图片预览">×</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="back-to-top" id="backToTop" type="button" aria-label="回到顶部">↑</button>
+
+  <script>
+    const revealTargets = document.querySelectorAll("section, .card, .arch-node, .timeline-item, .image-frame");
+    revealTargets.forEach((target) => {
+      if (!target.classList.contains("story-slide")) target.classList.add("reveal");
+    });
+
+    const storySlides = document.querySelectorAll(".story-slide");
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    revealTargets.forEach((target) => revealObserver.observe(target));
+    storySlides.forEach((target) => revealObserver.observe(target));
+
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImage = document.getElementById("lightboxImage");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const lightboxClose = document.querySelector(".lightbox-close");
+    const backToTop = document.getElementById("backToTop");
+    let lightboxCloseTimer = 0;
+
+    function closeLightbox() {
+      if (!lightbox.classList.contains("is-open")) return;
+      lightbox.classList.remove("is-open");
+      lightbox.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      window.clearTimeout(lightboxCloseTimer);
+      lightboxCloseTimer = window.setTimeout(() => {
+        if (!lightbox.classList.contains("is-open")) {
+          lightboxImage.src = "";
+          lightboxImage.alt = "";
+          lightboxCaption.textContent = "";
+        }
+      }, 340);
+    }
+
+    document.querySelectorAll(".image-frame img").forEach((image) => {
+      image.addEventListener("click", () => {
+        const frame = image.closest(".image-frame");
+        const caption = frame?.querySelector(".image-caption")?.textContent || image.alt || "作品图片";
+        window.clearTimeout(lightboxCloseTimer);
+        lightboxImage.src = image.currentSrc || image.src;
+        lightboxImage.alt = image.alt;
+        lightboxCaption.textContent = caption;
+        lightbox.classList.add("is-open");
+        lightbox.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      });
+    });
+
+    lightboxClose.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+    lightbox.addEventListener("wheel", closeLightbox, { passive: true });
+    lightbox.addEventListener("touchmove", closeLightbox, { passive: true });
+    function updateBackToTop() {
+      backToTop.classList.toggle("is-visible", window.scrollY > 620);
+    }
+
+    backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    updateBackToTop();
+    window.addEventListener("scroll", () => {
+      if (lightbox.classList.contains("is-open")) {
+        closeLightbox();
+      }
+      updateBackToTop();
+    }, { passive: true });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
+        closeLightbox();
+      }
+    });
+  </script>
+</body>
+</html>
